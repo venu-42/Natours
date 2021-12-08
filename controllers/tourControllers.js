@@ -1,5 +1,6 @@
 const Tour = require('../models/tourModel');
-const APIFeatures = require('../utils/apiFeatures')
+const APIFeatures = require('../utils/apiFeatures');
+const AppError = require('../utils/appError');
 
 exports.getTopFiveCheap = async (req,res,next)=>{
     req.query={}
@@ -9,52 +10,45 @@ exports.getTopFiveCheap = async (req,res,next)=>{
     next()
 }
 
-
-exports.getAllTours =async (req,res,next)=>{
-    try{
-       
-        const features = new APIFeatures(Tour.find(),req.query)
-
-        features
-        .filter()
-        .sort()
-        .fields()
-        .pagination()
-
-        const tours= await features.query
-
-        res.status(200).json({
-            status:"success",
-            results:tours.length,
-            data:tours
-        })
-    }
-    catch(err){
-        console.log(err)
-        res.status(404).json({
-            status:"fail",
-            message:err
-        })
+const catchAsync = fn => {
+    return (req,res,next)=>{
+        fn(req,res,next).catch(next);
     }
 }
 
-exports.getTour = async (req,res,next)=>{
-    try{
-        const tour = await Tour.findById(req.params.id);
-        res.status(200).json({
-            status:"success",
-            data:{
-                tour
-            }
-        })
+
+exports.getAllTours =catchAsync(async (req,res,next)=>{
+    const features = new APIFeatures(Tour.find(),req.query)
+
+    features
+    .filter()
+    .sort()
+    .fields()
+    .pagination()
+
+    const tours= await features.query
+
+    res.status(200).json({
+        status:"success",
+        results:tours.length,
+        data:tours
+    })
+})
+
+exports.getTour = catchAsync(async (req,res,next)=>{
+    const tour = await Tour.findById(req.params.id);
+
+    if(!tour){
+        return next(new AppError('Tour not found',404))
     }
-    catch(err){
-        res.status(404).json({
-            status:"fail",
-            message:err
-        })
-    }
-}
+
+    res.status(200).json({
+        status:"success",
+        data:{
+            tour
+        }
+    })
+})
 
 
 exports.addTour = async (req,res,next)=>{
@@ -75,12 +69,18 @@ exports.addTour = async (req,res,next)=>{
     }
 }
 
-exports.editTour = async (req,res)=>{
+exports.editTour = async (req,res,next)=>{
     try{
         const newTour = await Tour.findByIdAndUpdate(req.body.id,req.body,{
             new:true,
             runValidators:true
         });
+
+        //! mongoose don't give a error here because ID is valid and only the tour is not found. hence we need to explicilty call for error
+        //! this can also be done in the way done in getTour controller above
+        if(!newTour){
+            return next(new AppError('Tour not found',404))
+        }
         res.status(201).json({
             status:"created",
             data:{
@@ -98,8 +98,13 @@ exports.editTour = async (req,res)=>{
 
 exports.deleteTour = async (req,res,next)=>{
     try{
-        await Tour.findByIdAndDelete(req.params.id);
-        // console.log(tour)
+        const tour = await Tour.findByIdAndDelete(req.params.id);
+
+        //! mongoose dont give an error for following
+        if(!tour){
+            return next(new AppError('Tour not found',404))
+        }
+
         res.status(204).json({
             status:"success",
             data:null
@@ -113,7 +118,7 @@ exports.deleteTour = async (req,res,next)=>{
     }
 }
 
-exports.getTourStats = async (req,res)=>{
+exports.getTourStats = async (req,res,next)=>{
     try{
         const tours= await Tour.aggregate([
             {
@@ -148,7 +153,7 @@ exports.getTourStats = async (req,res)=>{
     }
 }
 
-exports.getMonthlyPlan = async (req,res)=>{    
+exports.getMonthlyPlan = async (req,res,next)=>{    
     try{
         const year = req.params.year *1
         const tours = await Tour.aggregate([

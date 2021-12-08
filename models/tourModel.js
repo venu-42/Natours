@@ -77,7 +77,7 @@ tourSchema.pre('save',function(next){
 })
 
 tourSchema.post('save',function(doc,next){
-  // this represents the document object
+  //! this represents the document object
   console.log('just now saved!😊')
   next();
 })
@@ -85,11 +85,13 @@ tourSchema.post('save',function(doc,next){
 // 2) query Middleware
 // below regualr expression is used to cover all the find queries ex: find, findOne, findOneandUpdate etc
 tourSchema.pre(/^find/,function(next){
-  // this represents the query object
+  //! this represents the query object
   this.find({secretTour:{$ne:true}})
   console.log('secretTours filtered out😁')
   next()
 })
+
+// 3) Aggregate Middlewares
 
 
 
