@@ -51,9 +51,48 @@ const tourSchema = new mongoose.Schema({
       type:Date,
       default:Date.now()
     },
-    startDates:[Date]
-  })
-  
+    startDates:[Date],
+    secretTour:{
+      type:Boolean,
+      default:false
+    }
+  },{
+    // to be able to see virtuals in actual output
+    toJSON:{virtuals:true},
+    toObject:{virtuals:true}
+})
+
+// virtual field. It just shows up after mongoose renders it. Not actualy stored in Mongodb
+tourSchema.virtual('DurationWeeks').get(function(){
+  return this.duration/7;
+})
+
+// Middlewares
+
+// 1) Document middleware. 
+//runs on save(), create() mongoose fns not for insertMany()
+tourSchema.pre('save',function(next){
+  console.log('saving doc!!')
+  next()
+})
+
+tourSchema.post('save',function(doc,next){
+  // this represents the document object
+  console.log('just now saved!😊')
+  next();
+})
+
+// 2) query Middleware
+// below regualr expression is used to cover all the find queries ex: find, findOne, findOneandUpdate etc
+tourSchema.pre(/^find/,function(next){
+  // this represents the query object
+  this.find({secretTour:{$ne:true}})
+  console.log('secretTours filtered out😁')
+  next()
+})
+
+
+
 const Tour = mongoose.model('Tour',tourSchema);
 
 module.exports = Tour;
