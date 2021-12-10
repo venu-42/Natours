@@ -51,72 +51,48 @@ exports.getTour = catchAsync(async (req,res,next)=>{
 })
 
 
-exports.addTour = async (req,res,next)=>{
-    try{
-        const newTour = await Tour.create(req.body);
-        res.status(201).json({
-            status:"created",
-            data:{
-                tour:newTour
-            }
-        })        
-    }
-    catch(err){
-        res.status(400).json({
-            status:'fail',
-            message:'invalid'
-        })
-    }
-}
-
-exports.editTour = async (req,res,next)=>{
-    try{
-        const newTour = await Tour.findByIdAndUpdate(req.body.id,req.body,{
-            new:true,
-            runValidators:true
-        });
-
-        //! mongoose don't give a error here because ID is valid and only the tour is not found. hence we need to explicilty call for error
-        //! this can also be done in the way done in getTour controller above
-        if(!newTour){
-            return next(new AppError('Tour not found',404))
+exports.addTour = catchAsync( async (req,res,next)=>{
+    const newTour = await Tour.create(req.body);
+    res.status(201).json({
+        status:"created",
+        data:{
+            tour:newTour
         }
-        res.status(201).json({
-            status:"created",
-            data:{
-                tour:newTour
-            }
-        })        
-    }
-    catch(err){
-        res.status(400).json({
-            status:'fail',
-            message:err
-        })
-    }
-}
+    })
+})
 
-exports.deleteTour = async (req,res,next)=>{
-    try{
-        const tour = await Tour.findByIdAndDelete(req.params.id);
+exports.editTour = catchAsync( async (req,res,next)=>{
+    const newTour = await Tour.findByIdAndUpdate(req.body.id,req.body,{
+        new:true,
+        runValidators:true
+    });
 
-        //! mongoose dont give an error for following
-        if(!tour){
-            return next(new AppError('Tour not found',404))
+    //! mongoose don't give a error here because ID is valid and only the tour is not found. hence we need to explicilty call for error
+    //! this can also be done in the way done in getTour controller above
+    if(!newTour){
+        return next(new AppError('Tour not found',404))
+    }
+    res.status(201).json({
+        status:"created",
+        data:{
+            tour:newTour
         }
+    })
+})
 
-        res.status(204).json({
-            status:"success",
-            data:null
-        })
+exports.deleteTour = catchAsync( async (req,res,next)=>{
+    const tour = await Tour.findByIdAndDelete(req.params.id);
+
+    //! mongoose dont give an error for following
+    if(!tour){
+        return next(new AppError('Tour not found',404))
     }
-    catch(err){
-        res.status(400).json({
-            status:"fail",
-            message:err
-        })
-    }
-}
+
+    res.status(204).json({
+        status:"success",
+        data:null
+    })
+})
 
 exports.getTourStats = async (req,res,next)=>{
     try{

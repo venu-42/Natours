@@ -10,7 +10,8 @@ const tourSchema = new mongoose.Schema({
     },
     duration:{
       type:Number,
-      required:[true,'A tour must have a duration']
+      required:[true,'A tour must have a duration'],
+      max:30
     },
     maxGroupSize:{
       type:Number,
@@ -18,11 +19,14 @@ const tourSchema = new mongoose.Schema({
     },
     difficulty:{
       type:String,
-      required:[true,'A tour must have a difficulty']
+      required:[true,'A tour must have a difficulty'],
+      enum:['easy','medium','hard']
     },
     ratingAvg:{
       type:Number,
-      default:4.5
+      default:4.5,
+      min:1,
+      max:5
     },
     ratingQuantity:{
       type:Number,

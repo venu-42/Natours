@@ -1,3 +1,23 @@
+const AppError = require('./../utils/appError');
+
+const handleCastErrorDB= (err)=>{
+    const message = `Invalid ${err.path}: ${err.value}`
+    return new AppError(message,400);
+}
+
+const handleDuplicateNameDB= (err)=>{
+    const errors = Object.values(err.keyValue)
+    const message = `following are duplicate values: ${errors.join('. ')}`
+    return new AppError(message,400);
+}
+
+const handleValidationErrorDB= (err)=>{
+    const errors = Object.values(err.errors).map(el=>el.message)
+    const message = `Invalid input data ${errors.join('. ')}`
+    return new AppError(message,400);
+}
+
+
 const sendErrorDev = (err,res)=>{
     res.status(err.statusCode).json({
         status:err.status,
@@ -35,7 +55,18 @@ module.exports = (err,req,res,next)=>{
         sendErrorDev(err,res);
     }
     else if(process.env.NODE_ENV === 'production'){
-        sendErrorProd(err,res);
+        let error = {...err};
+        //Todo error object not receiving property name from err so compared with the original err only
+        if(err.name==='CastError') {
+            error = handleCastErrorDB(error);
+        }
+        else if(err.code===11000){
+            error = handleDuplicateNameDB(error);
+        }
+        else if(err.name==='ValidationError'){
+            error = handleValidationErrorDB(error)
+        }
+        sendErrorProd(error,res);
     }
     
 }
