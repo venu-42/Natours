@@ -1,6 +1,7 @@
 const Tour = require('../models/tourModel');
 const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync')
 
 exports.getTopFiveCheap = async (req,res,next)=>{
     req.query={}
@@ -8,12 +9,6 @@ exports.getTopFiveCheap = async (req,res,next)=>{
     req.query.sort='-ratingAvg,price';
     req.query.fields='name,ratingAvg,price'
     next()
-}
-
-const catchAsync = fn => {
-    return (req,res,next)=>{
-        fn(req,res,next).catch(next);
-    }
 }
 
 
